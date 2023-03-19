@@ -34,7 +34,8 @@ Citizen.CreateThread(function()
 				id = idhouse,
 				door = vector3(v.Door.x, v.Door.y, v.Door.z),
                 interior = vector3(v.Interior.x, v.Interior.y, v.Interior.z),
-                hint = v.HeadingInt
+                hint = v.HeadingInt,
+                loot = v.LootH
 		})
 		idhouse = idhouse + 1  
 	end
@@ -134,25 +135,85 @@ AddEventHandler('fly:startrobbery', function()
         end)
 end)
 
-
 RegisterNetEvent('fly:startminigame')
 AddEventHandler('fly:startminigame', function()
-        local success = lib.skillCheck(Config.SkillDifficulty)
-        local rand = Config.SkillRepeatTimes
+    local success = lib.skillCheck({ 'easy', 'easy', 'easy', { areaSize = 60, speedMultiplier = 1 }, 'easy' })
 
-        if rand == 1 then
-            print('quitaritem')
-        end
     
-        if success == rand then
+        if success then
+            SetEntityCoords(PlayerPedId(),alllocations[randomlocation].interior,0,0,0,0)
+			SetEntityHeading(PlayerPedId(),alllocations[randomlocation].hint)
+            DisplayLoot()
             if GetPedDrawableVariation(PlayerPedId(), 1) == 0 then
                 print("notenimascara")
-                SetEntityCoords(PlayerPedId(),alllocations[randomlocation].interior,0,0,0,0)
-					SetEntityHeading(PlayerPedId(),alllocations[randomlocation].hint)
             else
                print("tenimascara")
-               SetEntityCoords(ped,alllocations[randomlocation].interior,0,0,0,0)
-					SetEntityHeading(PlayerPedId(),alllocations[randomlocation].hint)
             end
+            Citizen.CreateThread(function()
+                while true do
+                    s = 1000
+                    local coords = GetEntityCoords(PlayerPedId())
+                        if GetDistanceBetweenCoords(coords,alllocations[randomlocation].interior, true) < 2 then
+                             s = 5
+                             if Config.OxTarget then
+                                exports.ox_target:addSphereZone({
+                                    coords = alllocations[randomlocation].interior,
+                                    radius = 1,
+                                    debug = false,
+                                    options = {
+                                        {
+                                            name = 'exithouse',
+                                            event = 'fly:leavehouse',
+                                            icon = 'fa-solid fa-circle',
+                                            label = 'Leaves the house',
+                                        }
+                                    }
+                                })
+                            else
+                                ESX.ShowFloatingHelpNotification("Press [E] to Leaves the house", vector3(alllocations[randomlocation].door+2))
+                                if IsControlJustReleased(0,38)  then
+                                    SetEntityCoords(PlayerPedId(),alllocations[randomlocation].door,0,0,0,0)
+                                end
+                            end
+                        end
+                    Citizen.Wait(s)
+                end
+            end)
+        else
+            print('quitaitem')
         end
 end)
+
+RegisterNetEvent('fly:leavehouse')
+AddEventHandler('fly:leavehouse', function()
+    SetEntityCoords(PlayerPedId(),alllocations[randomlocation].door,0,0,0,0)
+end)
+RegisterCommand('te', function ()
+    DisplayLoot()
+end)
+
+
+function DisplayLoot()
+    for i,v in ipairs(alllocations[randomlocation].loot) do
+    local collected = false
+    Citizen.CreateThread(function()
+        while true do
+            s = 1000
+            local coords = GetEntityCoords(PlayerPedId())
+                if GetDistanceBetweenCoords(coords,alllocations[randomlocation].loot[i], true) < 2 and PlayerData.job ~= nil and PlayerData.job.name ~= Config.JobName  then
+                     s = 5
+                     ESX.ShowFloatingHelpNotification("Press [E] to steals a house",alllocations[randomlocation].loot[i])
+                        if GetDistanceBetweenCoords(coords,alllocations[randomlocation].loot[i], true) < 1 then
+                                if IsControlJustReleased(1, 51) and not collected then
+                                        print('entregaitemrandompornivel')
+                                    else
+                                        print('robao')
+                                end
+
+                        end
+                end
+            Citizen.Wait(s)
+        end
+    end)
+end
+end
