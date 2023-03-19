@@ -9,12 +9,20 @@ Config.Ped = {
 Config.Houses = {
     House1 = {
         Door = vector3(-174.7202, 502.5304, 137.4204),
-        Interior = vector3(-174.3378, 497.484, 137.6535),
-        HeadingInt = 191.0619
+        Interior = vector3(-174.3378, 497.484, 137.6535), 
+        HeadingInt = 191.0619,
+        LootH = {
+            vector3(-170.3029, 496.1262, 137.6536),
+            vector3(-170.6799, 482.5876, 137.2442),
+            vector3(-167.5402, 488.0954, 133.8438),
+            vector3(-174.4345, 493.9098, 130.0436)
+        }
     }
 }
 Config.OxTarget = true
 Config.JobName = 'police'
 
-Config.SkillDifficulty = 'medium' -- easy, medium, hard
-Config.SkillRepeatTimes =4 -- How many times the skill check repeats until finish
+Config.SkillCheck = {
+    difficulty = 'hard', -- easy, medium, hard
+    repeatTimes = math.random(5, 10), -- How many times the skill check repeats until finish
+}
