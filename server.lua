@@ -7,12 +7,12 @@ AddEventHandler('fly:checkitem', function()
     local item = exports.ox_inventory:GetItem(source, Config.ItemRequired, nil, 1)
     if Config.RequiredItem then
         if xPlayer.getInventoryItem(Config.ItemRequired).count >= 1 then -- or if xPlayer.getInventoryItem('Config.ItemRequired', 1) then  ####  for users who do not use ox inventory
-            TriggerClientEvent('fly:startminigame', -1)
+            xPlayer.triggerEvent('fly:startminigame')
         else
             xPlayer.showNotification('You dont have a lock pick')
         end
     else
-        TriggerClientEvent('fly:startminigame', -1)
+        xPlayer.triggerEvent('fly:startminigame')
         print('mono')
     end
 end)
@@ -70,6 +70,7 @@ AddEventHandler('fly:time', function()
 end)
 
 RegisterServerEvent('fly:sendcall')
-AddEventHandler('fly:sendcall', function()
-    TriggerClientEvent('fly:policecall', -1)
+AddEventHandler('fly:sendcall', function(coords)
+    TriggerClientEvent('fly:policecall', -1, coords)
 end)
+
