@@ -267,7 +267,7 @@ end
 
 RegisterNetEvent('fly:policecall')
 AddEventHandler('fly:policecall', function(coords)
-    if PlayerData.job ~= nil and PlayerData.job.name == "police" then
+    if PlayerData.job ~= nil and PlayerData.job.name == Config.JobName then
 		ESX.ShowNotification("Apparently a person has forced the door of a house and is stealing inside.")
 		blippolice = AddBlipForCoord(coords)
 		SetBlipSprite(blippolice, 161)
