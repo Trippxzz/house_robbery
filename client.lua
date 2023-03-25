@@ -105,6 +105,7 @@ AddEventHandler('fly:checkpolice', function()
                         if canrob then
                             TriggerServerEvent('fly:time')
                             TriggerEvent('fly:startrobbery')
+                            exit = false
                         else
                             ESX.ShowNotification("Not enough cops connected")
                         end
@@ -134,37 +135,42 @@ AddEventHandler('fly:startrobbery', function()
             while true do
                 s = 1000 
                 local coords = GetEntityCoords(PlayerPedId())
-                    if GetDistanceBetweenCoords(coords, alllocations[randomlocation].door ) < 3 and start then
+                    if GetDistanceBetweenCoords(coords, alllocations[randomlocation].door ) < 3 then
                         s = 5
-                        if Config.OxTarget then
-                                exports.ox_target:addSphereZone({
-                                    coords = alllocations[randomlocation].door,
-                                    radius = 1,
-                                    debug = false,
-                                    options = {
-                                        {
-                                            name = 'opendoor',
-                                            event = 'fly:checkitem:cl',
-                                            icon = 'fa-solid fa-circle',
-                                            label = 'Sheet metal forcing',
+                            if Config.OxTarget then
+                                if start == true then
+                                       exports.ox_target:addSphereZone({
+                                        coords = alllocations[randomlocation].door,
+                                        radius = 1,
+                                        debug = false,
+                                        options = {
+                                            {
+                                                name = 'opendoor',
+                                                serverEvent = 'fly:checkitem',
+                                                icon = 'fa-solid fa-circle',
+                                                label = 'Sheet metal forcing',
+                                                canInteract = function()
+                                                    return start
+                                                end
+                                            }
                                         }
-                                    }
-                                })
-                        else
-                            ESX.ShowFloatingHelpNotification("Press [E] to Sheet metal forcing", vector3(alllocations[randomlocation].door))
-                            if IsControlJustReleased(0,38) and PlayerData.job.name ~= Config.PoliceJob then
-                                TriggerEvent('fly:checkitem:cl')	
+                                    })
+                                end
+                            else
+                                ESX.ShowFloatingHelpNotification("Press [E] to Sheet metal forcing", vector3(alllocations[randomlocation].door))
+                                if IsControlJustReleased(0,38) and PlayerData.job.name ~= Config.PoliceJob then
+                                    if start == true then
+                                    TriggerServerEvent('fly:checkitem')
+                                    else
+                                        ESX.ShowNotification("You can no longer re-enter")
+                                    end
+                                end
                             end
-                        end
                     end
                 Citizen.Wait(s)
             end
         end)
         Timetoarrive()
-end)
-RegisterNetEvent('fly:checkitem:cl')
-AddEventHandler('fly:checkitem:cl', function()
-    TriggerServerEvent('fly:checkitem')
 end)
 
 RegisterNetEvent('fly:startminigame')
@@ -179,18 +185,6 @@ AddEventHandler('fly:startminigame', function()
             SetEntityCoords(PlayerPedId(),alllocations[randomlocation].interior,0,0,0,0)
 			SetEntityHeading(PlayerPedId(),alllocations[randomlocation].hint)
             DisplayLoot()
-            -- exports.ox_target:removeZone({
-            -- coords = alllocations[randomlocation].door,
-            -- radius = 1,
-            -- debug = false,
-            -- options = {
-            --     {
-            --         name = 'opendoor',
-            --         event = 'fly:checkitem:cl',
-            --         icon = 'fa-solid fa-circle',
-            --         label = 'Sheet metal forcing',
-            --     }
-            -- }})
             Citizen.CreateThread(function()
                 while true do
                     s = 1000
@@ -212,7 +206,7 @@ AddEventHandler('fly:startminigame', function()
                                     }
                                 })
                             else
-                                ESX.ShowFloatingHelpNotification("Press [E] to leaves the house", vector3(alllocations[randomlocation].door+2))
+                                ESX.ShowFloatingHelpNotification("Press [E] to leaves the house", vector3(alllocations[randomlocation].interior))
                                 if IsControlJustReleased(0,38)  then
                                     SetEntityCoords(PlayerPedId(),alllocations[randomlocation].door,0,0,0,0)
                                 end
@@ -230,19 +224,6 @@ end)
 
 RegisterNetEvent('fly:leavehouse')
 AddEventHandler('fly:leavehouse', function()
-    -- exports.ox_target:removeZone({
-    --     coords = alllocations[randomlocation].interior,
-    --     radius = 1,
-    --     debug = false,
-    --     options = {
-    --         {
-    --             name = 'exithouse',
-    --             event = 'fly:leavehouse',
-    --             icon = 'fa-solid fa-circle',
-    --             label = 'Leaves the house',
-    --         }
-    --     }
-    -- })
     start = false
     SetEntityCoords(PlayerPedId(),alllocations[randomlocation].door,0,0,0,0)
 end)
@@ -265,7 +246,7 @@ function DisplayLoot()
                                         collected = true
                                         revising = true
                                         cont = cont + 1
-                                        if cont == 2 then   --this will be used so that when the thief has checked at least 2 places, an announcement will be sent to the police, so that the thief will have a chance to escape.
+                                        if cont == 1 then   --this will be used so that when the thief has checked at least 1 places, an announcement will be sent to the police, so that the thief will have a chance to escape.
                                             ESX.ShowNotification('Hey, youre making too much noise, be quieter.')
                                             TriggerServerEvent('fly:sendcall', alllocations[randomlocation].door)
                                         elseif cont == 4 then
@@ -283,9 +264,10 @@ function DisplayLoot()
     end)
     end
 end
+
 RegisterNetEvent('fly:policecall')
 AddEventHandler('fly:policecall', function(coords)
-    if PlayerData.job ~= nil and PlayerData.job.name == Config.JobName then
+    if PlayerData.job ~= nil and PlayerData.job.name == "police" then
 		ESX.ShowNotification("Apparently a person has forced the door of a house and is stealing inside.")
 		blippolice = AddBlipForCoord(coords)
 		SetBlipSprite(blippolice, 161)
@@ -321,19 +303,6 @@ function Timetoarrive()
             start = false
             RemoveBlip(Blip)
             ESX.ShowNotification("You didn't force the door in a reasonable time, come back to steal later.")
-            -- exports.ox_target:removeZone({
-            --     coords = alllocations[randomlocation].door,
-            --     radius = 1,
-            --     debug = false,
-            --     options = {
-            --         {
-            --             name = 'opendoor',
-            --             event = 'fly:checkitem:cl',
-            --             icon = 'fa-solid fa-circle',
-            --             label = 'Sheet metal forcing',
-            --         }
-            --     }
-            -- })
         end
     end
 end
@@ -345,6 +314,7 @@ function timetocheck()
             if all_reviewed == false then
                 can_review = false
                 ESX.ShowNotification("The time to review the site locations is over.")
+                TriggerServerEvent('fly_logsloot')
             else
                 all_reviewed = false
             end
@@ -356,7 +326,7 @@ end
 function animation()
     startAnim(PlayerPedId(), "anim@gangops@facility@servers@bodysearch@", "player_search")
     FreezeEntityPosition(PlayerPedId(), true)
-    Citizen.Wait(15000)
+    Citizen.Wait(8000)
     ClearPedTasks(PlayerPedId())
     FreezeEntityPosition(PlayerPedId(), false)
     TriggerServerEvent('fly:giveloot')
